@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     private String names;
     private String phone;
     private String email;
@@ -25,7 +25,6 @@ public class User {
     private String password;
     @Transient
     private String confirmPass;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
