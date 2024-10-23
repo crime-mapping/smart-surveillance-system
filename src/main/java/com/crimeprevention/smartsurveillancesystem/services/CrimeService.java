@@ -43,15 +43,15 @@ public class CrimeService {
     }
 
     public List<Crime> getCrimesByType(ECrimeType crimeType) {
-        return crimeRepository.findByCrimeType(crimeType);
+        return crimeRepository.findByECrimeType(crimeType);
     }
 
     public List<Crime> getCrimesByEmergencyLevel(EEmergencyLevel emergencyLevel) {
-        return crimeRepository.findByEmergencyLevel(emergencyLevel);
+        return crimeRepository.findByEEmergencyLevel(emergencyLevel);
     }
 
     public List<Crime> getCrimesByCaseStatus(ECaseStatus caseStatus) {
-        return crimeRepository.findByCaseStatus(caseStatus);
+        return crimeRepository.findByECaseStatus(caseStatus);
     }
 
     public List<Crime> getCrimesByLocation(String location) {

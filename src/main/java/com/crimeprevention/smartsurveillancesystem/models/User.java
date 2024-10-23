@@ -20,6 +20,7 @@ public class User {
     private ERole role;
     private boolean googleAuth;
     private boolean twoFactorEnabled;
+    @Transient
     private String twoFactorSecret;
     private String password;
     @Transient

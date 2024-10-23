@@ -3,16 +3,13 @@ package com.crimeprevention.smartsurveillancesystem.controllers;
 import com.crimeprevention.smartsurveillancesystem.models.User;
 import com.crimeprevention.smartsurveillancesystem.services.UserService;
 import com.crimeprevention.smartsurveillancesystem.services.TwoFactorService;
-import dev.samstevens.totp.code.DefaultCodeGenerator;
-import dev.samstevens.totp.time.SystemTimeProvider;
+import com.crimeprevention.smartsurveillancesystem.types.ERole;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import dev.samstevens.totp.secret.SecretGenerator;
-import dev.samstevens.totp.secret.DefaultSecretGenerator;
 import dev.samstevens.totp.code.CodeVerifier;
-import dev.samstevens.totp.code.DefaultCodeVerifier;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,18 +18,13 @@ public class UserController {
 
     private final UserService userService;
     private final TwoFactorService twoFactorService;
-    private final SecretGenerator secretGenerator;
-    private final CodeVerifier codeVerifier;
     private final BCryptPasswordEncoder encoder;
+    private final CodeVerifier codeVerifier;
 
-    public UserController(UserService userService, TwoFactorService twoFactorService) {
+    public UserController(UserService userService, TwoFactorService twoFactorService, CodeVerifier codeVerifier) {
         this.userService = userService;
         this.twoFactorService = twoFactorService;
-        this.secretGenerator = new DefaultSecretGenerator();
-        this.codeVerifier = new DefaultCodeVerifier(
-                new DefaultCodeGenerator(),
-                new SystemTimeProvider()
-        );
+        this.codeVerifier = codeVerifier;
         this.encoder = new BCryptPasswordEncoder();
     }
 
@@ -47,8 +39,11 @@ public class UserController {
             }
 
             // Generate 2FA secret for new user
-            String secret = secretGenerator.generate();
+            String secret = twoFactorService.generateTempToken(user);
             user.setTwoFactorSecret(secret);
+            user.setRole(ERole.Officer);
+            user.setCreatedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
             user.setTwoFactorEnabled(true);
 
             String hashedPassword = encoder.encode(user.getPassword());

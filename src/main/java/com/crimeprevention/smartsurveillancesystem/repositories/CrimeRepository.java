@@ -11,11 +11,11 @@ import java.util.Date;
 import java.util.List;
 
 public interface CrimeRepository extends JpaRepository<Crime, Long> {
-    List<Crime> findByEmergencyLevel(EEmergencyLevel EEmergencyLevel);
+    List<Crime> findByEEmergencyLevel(EEmergencyLevel emergencyLevel);
 
-    List<Crime> findByCaseStatus(ECaseStatus ECaseStatus);
+    List<Crime> findByECaseStatus(ECaseStatus caseStatus);
 
-    List<Crime> findByCrimeType(ECrimeType ECrimeType);
+    List<Crime> findByECrimeType(ECrimeType crimeType);
 
     List<Crime> findByTimeOfOccurenceBetween(Date startDate, Date endDate);
 
