@@ -7,10 +7,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity @Getter @Setter
-public class CrimePrediction {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class CrimePrediction extends BaseModel{
     private LocalDateTime predictionDate;
     @Column(nullable = false)
     private String crimeType;

@@ -7,17 +7,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity @Getter @Setter
-public class Footage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Footage extends BaseModel{
     @Column(nullable = false)
     private String filePath;
     private LocalDateTime timestamp;
     private Boolean processed;
     @ManyToOne
     @JoinColumn(name = "camera_id", nullable = false)
-    private SurveillanceCamera surveillanceCamera;
+    private Camera camera;
     @OneToOne
     @JoinColumn(name = "incident_report_id")
     private IncidentReport incidentReport;

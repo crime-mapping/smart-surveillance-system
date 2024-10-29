@@ -8,11 +8,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity @Setter @Getter
-public class IncidentReport {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+public class IncidentReport extends BaseModel{
     @Column(nullable = false)
     private String title;
 

@@ -5,12 +5,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter
 @Table(name = "users")
-public class User {
+public class User extends BaseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,8 +24,6 @@ public class User {
     private String password;
     @Transient
     private String confirmPass;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     public User() {
     }
@@ -40,7 +37,7 @@ public class User {
         this.password = password;
     }
 
-    public User(long id, String names, String phone, String email, ERole role, boolean googleAuth, boolean twoFactorEnabled, String twoFactorSecret, String password, String confirmPass, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public User(long id, String names, String phone, String email, ERole role, boolean googleAuth, boolean twoFactorEnabled, String twoFactorSecret, String password, String confirmPass) {
         this.id = id;
         this.names = names;
         this.phone = phone;
@@ -51,7 +48,5 @@ public class User {
         this.twoFactorSecret = twoFactorSecret;
         this.password = password;
         this.confirmPass = confirmPass;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 }

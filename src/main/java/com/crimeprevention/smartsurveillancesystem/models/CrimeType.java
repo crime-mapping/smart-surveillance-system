@@ -10,10 +10,7 @@ import java.util.Set;
 
 @Entity
 @Getter @Setter
-public class CrimeType {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class CrimeType extends BaseModel{
     @Column(nullable = false, unique = true)
     private String name;
     private String description;
