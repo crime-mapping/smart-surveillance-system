@@ -1,6 +1,7 @@
 package com.crimeprevention.smartsurveillancesystem.repositories;
 
 
+import com.crimeprevention.smartsurveillancesystem.models.CrimeType;
 import com.crimeprevention.smartsurveillancesystem.types.ECaseStatus;
 import com.crimeprevention.smartsurveillancesystem.models.Crime;
 import com.crimeprevention.smartsurveillancesystem.types.ECrimeType;
@@ -15,7 +16,7 @@ public interface CrimeRepository extends JpaRepository<Crime, Long> {
 
     List<Crime> findByECaseStatus(ECaseStatus caseStatus);
 
-    List<Crime> findByECrimeType(ECrimeType crimeType);
+    List<Crime> findByCrimeTypesContaining(CrimeType crimeType);
 
     List<Crime> findByTimeOfOccurenceBetween(Date startDate, Date endDate);
 

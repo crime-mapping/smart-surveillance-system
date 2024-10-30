@@ -1,15 +1,21 @@
 package com.crimeprevention.smartsurveillancesystem.controllers;
 
+import ch.qos.logback.classic.pattern.EnsureExceptionHandling;
 import com.crimeprevention.smartsurveillancesystem.models.User;
 import com.crimeprevention.smartsurveillancesystem.services.UserService;
 import com.crimeprevention.smartsurveillancesystem.services.TwoFactorService;
 import com.crimeprevention.smartsurveillancesystem.types.ERole;
+import com.crimeprevention.smartsurveillancesystem.utils.JwtUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import dev.samstevens.totp.code.CodeVerifier;
 import java.time.LocalDateTime;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,6 +26,10 @@ public class UserController {
     private final TwoFactorService twoFactorService;
     private final BCryptPasswordEncoder encoder;
     private final CodeVerifier codeVerifier;
+    @Autowired
+    private JwtUtils jwtUtils;
+    @Autowired
+    private SpringTemplateEngine templateEngine;
 
     public UserController(UserService userService, TwoFactorService twoFactorService, CodeVerifier codeVerifier) {
         this.userService = userService;
@@ -84,34 +94,26 @@ public class UserController {
                 return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Credentials!"));
             }
 
-//            if (user.isGoogleAuth()) {
-//                return ResponseEntity.badRequest().body(new ErrorResponse("Please use Google login!"));
-//            }
-
             if (!encoder.matches(loginRequest.password(), user.getPassword())) {
                 return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Credentials!"));
             }
 
             if (user.isTwoFactorEnabled()) {
                 String tempToken = twoFactorService.generateTempToken(user);
+                Context context = new Context();
+                context.setVariable("th_name", user.getNames());
+                context.setVariable("th_code", tempToken);
+
+                String subject = "Your Smart Surveillance System 2FA Code";
+                String message = templateEngine.process("loginEmail", context);
+
+                userService.sendEmail(user.getEmail(), subject, tempToken);
+
                 return ResponseEntity.ok(new TwoFactorResponse(tempToken, "2FA Required"));
             }
 
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Internal Server error!"));
-        }
-    }
-
-    @PostMapping("/login/google")
-    public ResponseEntity<?> loginByGoogle(@RequestBody User googleUser) {
-        try {
-            User user = userService.emailExists(googleUser.getEmail());
-            if (user == null || !user.isGoogleAuth()) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Google account!"));
-            }
-            return ResponseEntity.ok(user);
+            String jwtToken = jwtUtils.generateToken(user);
+            return ResponseEntity.ok(new LoginResponse(jwtToken, user));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ErrorResponse("Internal Server error!"));
@@ -121,15 +123,9 @@ public class UserController {
     @PostMapping("/factor")
     public ResponseEntity<?> verifyTwoFactor(@RequestBody TwoFactorRequest request) {
         try {
-            // Verify the temporary token
             User user = twoFactorService.validateTempToken(request.tempToken());
             if (user == null) {
                 return ResponseEntity.badRequest().body(new ErrorResponse("Invalid or expired session!"));
-            }
-
-            // Verify the 2FA code
-            if (!codeVerifier.isValidCode(user.getTwoFactorSecret(), request.code())) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("Invalid 2FA code!"));
             }
 
             return ResponseEntity.ok(user);
@@ -138,6 +134,8 @@ public class UserController {
                     .body(new ErrorResponse("Internal Server error!"));
         }
     }
+
+
 
     @PatchMapping("/update")
     public ResponseEntity<?> updateUser(@RequestBody User updateData) {
@@ -156,6 +154,52 @@ public class UserController {
                     .body(new ErrorResponse("Internal Server error!"));
         }
     }
+
+    @PostMapping("/send-reset-link")
+    public String sendResetLink(@RequestParam String email, Model model) {
+        boolean isSent = userService.sendResetPasswordEmail(email);
+        if (isSent) {
+            model.addAttribute("message", "Reset link sent to your email.");
+        } else {
+            model.addAttribute("error", "Email not found.");
+        }
+        return "login";
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPasswordForm(@RequestParam("token") String token, Model model) {
+        if (!userService.validatePasswordResetToken(token)) {
+            model.addAttribute("errorMessage", "Invalid token or token expired.");
+            return "reset-password-request";
+        }
+        model.addAttribute("token", token);
+        return "reset-password-form";
+    }
+
+    @PostMapping("/update-password")
+    public String resetPassword(@RequestParam("token") String token, @RequestParam String newPassword,
+                                @RequestParam("confirmPassword") String confirmPassword, Model model) {
+        if (!userService.validatePasswordResetToken(token)) {
+            model.addAttribute("errorMessage", "Invalid token or token expired.");
+            return "reset-password-form";
+        }
+        // Validate token and update password
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("errorMessage", "Passwords do not match. Please try again.");
+            return "reset-password-form";
+        }
+        boolean isUpdated = userService.resetPassword(token, newPassword);
+        if (isUpdated) {
+            model.addAttribute("resetSuccess",
+                    "Password has been reset successfully. ");
+        } else {
+            model.addAttribute("errorMessage", "Invalid token or token expired.");
+            return "reset-password-form";
+        }
+        return "login";
+    }
+
+
 
     @PatchMapping("/changepassword")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
@@ -191,6 +235,7 @@ public class UserController {
 
     // Request/Response classes
     private record LoginRequest(String email, String password) {}
+    private record LoginResponse(String jwtToken, User user) {}
     private record TwoFactorRequest(String tempToken, String code) {}
     private record ChangePasswordRequest(String email, String currentPassword, String newPassword, String twoFactorCode) {}
     private record TwoFactorResponse(String tempToken, String message) {}

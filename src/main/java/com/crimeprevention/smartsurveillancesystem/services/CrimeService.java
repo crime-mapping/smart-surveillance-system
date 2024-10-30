@@ -2,6 +2,7 @@ package com.crimeprevention.smartsurveillancesystem.services;
 
 
 import com.crimeprevention.smartsurveillancesystem.models.Crime;
+import com.crimeprevention.smartsurveillancesystem.models.CrimeType;
 import com.crimeprevention.smartsurveillancesystem.repositories.CrimeRepository;
 import com.crimeprevention.smartsurveillancesystem.types.ECaseStatus;
 import com.crimeprevention.smartsurveillancesystem.types.ECrimeType;
@@ -42,8 +43,8 @@ public class CrimeService {
         crimeRepository.deleteById(id);
     }
 
-    public List<Crime> getCrimesByType(ECrimeType crimeType) {
-        return crimeRepository.findByECrimeType(crimeType);
+    public List<Crime> getCrimesByType(CrimeType crimeType) {
+        return crimeRepository.findByCrimeTypesContaining(crimeType);
     }
 
     public List<Crime> getCrimesByEmergencyLevel(EEmergencyLevel emergencyLevel) {

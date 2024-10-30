@@ -1,6 +1,7 @@
 package com.crimeprevention.smartsurveillancesystem.controllers;
 
 import com.crimeprevention.smartsurveillancesystem.models.Crime;
+import com.crimeprevention.smartsurveillancesystem.models.CrimeType;
 import com.crimeprevention.smartsurveillancesystem.services.CrimeService;
 import com.crimeprevention.smartsurveillancesystem.types.ECaseStatus;
 import com.crimeprevention.smartsurveillancesystem.types.ECrimeType;
@@ -77,7 +78,7 @@ public class CrimeController {
 
     // Get crimes by type
     @GetMapping("/type/{crimeType}")
-    public ResponseEntity<List<Crime>> getCrimesByType(@PathVariable ECrimeType crimeType) {
+    public ResponseEntity<List<Crime>> getCrimesByType(@PathVariable CrimeType crimeType) {
         List<Crime> crimes = crimeService.getCrimesByType(crimeType);
         return ResponseEntity.ok(crimes);
     }

@@ -11,45 +11,43 @@ import java.time.Instant;
 @Service
 public class TwoFactorService {
     private final Map<String, TempToken> tempTokens = new HashMap<>();
-    private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    // Inner class for TempToken
     private static class TempToken {
-        User user;
-        Instant expiry;
+        private final User user;
+        private final Instant expiry;
 
         TempToken(User user) {
             this.user = user;
-            this.expiry = Instant.now().plusSeconds(300); // 5 minutes
+            this.expiry = Instant.now().plusSeconds(300);
         }
 
         boolean isValid() {
             return Instant.now().isBefore(expiry);
         }
     }
-    private String generateSecret(int length) {
-        StringBuilder secret = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            int index = RANDOM.nextInt(ALPHANUMERIC.length());
-            secret.append(ALPHANUMERIC.charAt(index));
-        }
-        return secret.toString();
+
+    private String generateCode() {
+        return String.format("%06d", RANDOM.nextInt(1_000_000));
     }
 
     public String generateTempToken(User user) {
-        String token = generateSecret(6);
-        tempTokens.put(token, new TempToken(user));
-        return token;
+        String code = generateCode();
+        tempTokens.put(code, new TempToken(user));
+        return code;
     }
 
-    public User validateTempToken(String token) {
-        TempToken tempToken = tempTokens.get(token);
+    public User validateTempToken(String code) {
+        TempToken tempToken = tempTokens.get(code);
         if (tempToken != null && tempToken.isValid()) {
-            tempTokens.remove(token);
+            tempTokens.remove(code); // Remove once validated
             return tempToken.user;
         }
         return null;
     }
+
+    // Clean up expired tokens
     public void cleanupExpiredTokens() {
         tempTokens.entrySet().removeIf(entry -> !entry.getValue().isValid());
     }
